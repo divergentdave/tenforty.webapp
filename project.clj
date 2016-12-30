@@ -9,15 +9,22 @@
                  [tenforty "0.1.0-SNAPSHOT"]]
   :plugins [[lein-cljsbuild "1.1.5"]]
   :cljsbuild {:builds {:dev {:source-paths ["src-cljs"]
-                             :compiler {:output-to "resources/public/js/cljs.js"
-                                        :output-dir "resources/public/js"
+                             :compiler {:main tenforty.webapp.core
+                                        :asset-path "js/compiled/out"
+                                        :output-to "resources/public/js/compiled/tenforty.webapp.js"
+                                        :output-dir "resources/public/js/compiled/out"
                                         :optimizations :whitespace
                                         :pretty-print true
-                                        :source-map "resources/public/js/cljs.js.map"}}
+                                        :source-map "resources/public/js/compiled/tenforty.webapp.js.map"}}
                        :prod {:source-paths ["src-cljs"]
-                              :compiler {:output-to "resources/public/js-min/cljs-min.js"
-                                         :output-dir "resources/public/js-min"
+                              :compiler {:main tenforty.webapp.core
+                                         :asset-path "js/compiled/out"
+                                         :output-to "resources/public/js/compiled/tenforty.webapp-min.js"
+                                         :output-dir "resources/public/js/compiled/out-min"
                                          :optimizations :advanced
+                                         :externs ["resources/public/js/externs.js"]
                                          :pretty-print false
-                                         :source-map "resources/public/js-min/cljs-min.js.map"}}}}
+                                         :source-map "resources/public/js/compiled/tenforty.webapp-min.js.map"}}}}
+  :clean-targets ^{:protect false} ["resources/public/js/compiled"
+                                    :target-path]
   :profiles {:dev {:plugins [[lein-cljfmt "0.5.6"]]}})

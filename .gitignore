@@ -7,5 +7,5 @@ pom.xml.asc
 *.class
 /.lein-*
 /.nrepl-port
-/resources/public/js
-/resources/public/js-min
+/resources/public/js/compiled
+/resources/public/js/compiled-min
