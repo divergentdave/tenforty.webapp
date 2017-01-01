@@ -12,3 +12,7 @@
 .node.input rect {
     fill: #caf2bd;
 }
+
+.node.input.empty-input rect {
+    fill: #f2bdca;
+}
