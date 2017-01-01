@@ -18,13 +18,35 @@
                                         :source-map "resources/public/js/compiled/tenforty.webapp.js.map"}}
                        :prod {:source-paths ["src-cljs"]
                               :compiler {:main tenforty.webapp.core
-                                         :asset-path "js/compiled/out"
+                                         :asset-path "js/compiled/out-min"
                                          :output-to "resources/public/js/compiled/tenforty.webapp-min.js"
                                          :output-dir "resources/public/js/compiled/out-min"
                                          :optimizations :advanced
                                          :externs ["resources/public/js/externs.js"]
                                          :pretty-print false
-                                         :source-map "resources/public/js/compiled/tenforty.webapp-min.js.map"}}}}
+                                         :source-map "resources/public/js/compiled/tenforty.webapp-min.js.map"}}
+                       :test {:source-paths ["src-cljs" "test-cljs"]
+                              :compiler {:asset-path "js/compiled/out-test"
+                                         :output-to "resources/test/js/compiled/test.js"
+                                         :output-dir "resources/test/js/compiled/out-test"
+                                         :optimizations :whitespace
+                                         :pretty-print true
+                                         :source-map "resources/test/js/compiled/test.js.map"}}
+                       :test-min {:source-paths ["src-cljs" "test-cljs"]
+                                  :compiler {:asset-path "js/compiled/out-test-min"
+                                             :output-to "resources/test/js/compiled/test-min.js"
+                                             :output-dir "resources/test/js/compiled/out-test-min"
+                                             :optimizations :advanced
+                                             :externs ["resources/public/js/externs.js"]
+                                             :pretty-print true
+                                             :source-map "resources/test/js/compiled/test-min.js.map"}}}
+              :test-commands {"unit" ["phantomjs"
+                                      "resources/test/test.js"
+                                      "resources/test/test.html"]
+                              "unit-min" ["phantomjs"
+                                          "resources/test/test.js"
+                                          "resources/test/test-min.html"]}}
   :clean-targets ^{:protect false} ["resources/public/js/compiled"
+                                    "resources/test/js/compiled"
                                     :target-path]
   :profiles {:dev {:plugins [[lein-cljfmt "0.5.6"]]}})
