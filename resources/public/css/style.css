@@ -16,3 +16,11 @@
 .node.input.empty-input rect {
     fill: #f2bdca;
 }
+
+div.controls {
+    text-align: center;
+}
+
+div.controls input[type=number] {
+    width: 8em;
+}
