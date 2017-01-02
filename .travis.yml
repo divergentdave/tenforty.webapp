@@ -4,3 +4,4 @@ before_install: (mkdir checkouts && cd checkouts && git clone https://github.com
 install: lein with-profile +dev deps
 script:
   - lein with-profile +dev cljfmt check
+  - lein cljsbuild test
