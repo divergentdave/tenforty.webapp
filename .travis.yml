@@ -4,6 +4,10 @@ before_install: (mkdir checkouts && cd checkouts && git clone https://github.com
 install: lein with-profile +dev deps
 script:
   - lein with-profile +dev cljfmt check
+  - lein cljsbuild once dev
+  - lein cljsbuild once prod
+  - lein cljsbuild once test
+  - lein cljsbuild once test-min
   - lein cljsbuild test
 deploy:
   provider: s3
