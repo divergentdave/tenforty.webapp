@@ -5,3 +5,15 @@ install: lein with-profile +dev deps
 script:
   - lein with-profile +dev cljfmt check
   - lein cljsbuild test
+deploy:
+  provider: s3
+  bucket: tenforty-webapp-static
+  region: ca-central-1
+  on:
+    repo: divergentdave/tenforty.webapp
+    branch: master
+  skip_cleanup: true
+  local_dir: resources/public
+  access_key_id: AKIAIH3FT7RWD3KL6IUA
+  secret_access_key:
+    secure: ng87YXpJ7aMGWY+fBUqQn2TYQ1YIJwwEBdeYKPhbb4v0w8j7UTBXXAuKA3m6KFPoIT3L3OHHKeQ0hgacWI2JSev/5Qneik0uysp1irXlJgulIcZ00GARFOWJViwYUv9P9Uv/bvdC8N9yadtXrvgcCvsy0Uw5oqw18iA761WbEhb8jdBYa8oJe17iwSrWcD0HXMWxJo/yr79xn2Fc9hyPPtrTYd5rN6MZEYIPopQ9/9yAwZaRLLUIPXuruEu9SNVaeggfaVvXCgZRwZap8jPG/7cVG001v89lH7ck8G8HxPQySgyDsLtkrqcnUiEsXmN2Mxe9X6X4RRdjNzGIDsIkT1S16Yen3pujxNnj2BRftUnBbZClj1OjDsy0D5sfadJj+IvUGYaN4a2NTjvIxtNBYz/exoKV/HP7ODKzX+RXK2DDDqTq28UvLX+SbciwjzV/z+OZhSMhQsZJyXq2v/x5xm2i3W5brnjW9esVRLH4HhUaoHCvGZT5Udix5rJwToyWqnXKMunxVcYyWFQ0nRvztFyJ+NaKJesfqWN4XkxtKmLdV7VKeja3MKWJgV4+sFMhR5GSsRFKIvPw91Yvwe0Pp/VGL9SQmfhEB2j/dUUeWhMx5WvXrUR1yc02Tz7z5EWCe8O6fAqAbtfm81jcVBmnwBo2v5WJ3iujtyEEq5zvqQw=
