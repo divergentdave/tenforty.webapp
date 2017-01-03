@@ -41,9 +41,11 @@
                                              :pretty-print true
                                              :source-map "resources/test/js/compiled/test-min.js.map"}}}
               :test-commands {"unit" ["phantomjs"
+                                      "--debug=true"
                                       "resources/test/test.js"
                                       "resources/test/test.html"]
                               "unit-min" ["phantomjs"
+                                          "--debug=true"
                                           "resources/test/test.js"
                                           "resources/test/test-min.html"]}}
   :clean-targets ^{:protect false} ["resources/public/js/compiled"
