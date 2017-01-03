@@ -13,6 +13,7 @@ deploy:
   provider: s3
   bucket: tenforty-webapp-static
   region: ca-central-1
+  acl: public_read
   on:
     repo: divergentdave/tenforty.webapp
     branch: master
