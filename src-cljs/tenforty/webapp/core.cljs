@@ -69,48 +69,49 @@
     (aset shapes "rectSelect"
           (shape-helper enum-controls))))
 
-(let [situation (atom (->MapTaxSituation {} {}))]
-  (defn init
-    []
-    (let [g (js/dagreD3.graphlib.Graph.)
-          svg (.select js/d3 "svg")
-          svg-group (.append svg "g")
-          render (js/dagreD3.render.)]
-      (register-shapes render)
-      (.setGraph g {})
-      (.setDefaultEdgeLabel g #(js-obj))
-      (dorun (map #(.setNode
-                    g
-                    (str (get-keyword %))
-                    (condp instance? %
-                      NumberInputLine
-                      (js-obj "label" (get-name %)
-                              "shape" "rectInput"
-                              "class" "input empty-input")
-                      BooleanInputLine
-                      (js-obj "label" (get-name %)
-                              "shape" "rectRadioButtons"
-                              "class" "input empty-input")
-                      CodeInputLine
-                      (js-obj "label" (get-name %)
-                              "shape" "rectSelect"
-                              "class" "input empty-input")
-                      (js-obj "label" (get-name %))))
-                  (vals (:lines forms))))
-      (dorun (map
-              (fn [dest] (dorun (map
-                                 (fn [src] (.setEdge
-                                            g
-                                            (str src)
-                                            (str (get-keyword dest))))
-                                 (get-deps dest))))
-              (vals (:lines forms))))
-      (render (.select js/d3 "svg g") g)
-      (let [graph (.graph g)
-            width (aget graph "width")
-            height (aget graph "height")]
-        (.attr svg "width" (+ width 40))
-        (.attr svg "height" (+ height 40)))
-      (.attr svg-group "transform" "translate(20, 20)"))))
+(defn init
+  []
+  (let [g (js/dagreD3.graphlib.Graph.)
+        svg (.select js/d3 "svg")
+        svg-group (.append svg "g")
+        render (js/dagreD3.render.)]
+    (register-shapes render)
+    (.setGraph g {})
+    (.setDefaultEdgeLabel g #(js-obj))
+    (dorun (map #(.setNode
+                  g
+                  (str (get-keyword %))
+                  (condp instance? %
+                    NumberInputLine
+                    (js-obj "label" (get-name %)
+                            "shape" "rectInput"
+                            "class" "input empty-input")
+                    BooleanInputLine
+                    (js-obj "label" (get-name %)
+                            "shape" "rectRadioButtons"
+                            "class" "input empty-input")
+                    CodeInputLine
+                    (js-obj "label" (get-name %)
+                            "shape" "rectSelect"
+                            "class" "input empty-input")
+                    (js-obj "label" (get-name %))))
+                (vals (:lines forms))))
+    (dorun (map
+            (fn [dest] (dorun (map
+                               (fn [src] (.setEdge
+                                          g
+                                          (str src)
+                                          (str (get-keyword dest))))
+                               (get-deps dest))))
+            (vals (:lines forms))))
+    (render (.select js/d3 "svg g") g)
+    (let [graph (.graph g)
+          width (aget graph "width")
+          height (aget graph "height")]
+      (.attr svg "width" (+ width 40))
+      (.attr svg "height" (+ height 40)))
+    (.attr svg-group "transform" "translate(20, 20)")))
+
+(let [situation (atom (->MapTaxSituation {} {}))])
 
 (.addEventListener js/document "DOMContentLoaded" init)
