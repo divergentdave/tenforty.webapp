@@ -6,8 +6,27 @@
                                    ->MapTaxSituation
                                    NumberInputLine
                                    BooleanInputLine
-                                   CodeInputLine]]
+                                   CodeInputLine
+                                   FormulaLine
+                                   reverse-deps
+                                   make-context]]
             [tenforty.forms.ty2015 :refer [forms]]))
+
+(def g (js/dagreD3.graphlib.Graph.))
+
+(defn nodelist-to-seq
+  [nodelist]
+  (doall (map
+          #(.item nodelist %)
+          (range (aget nodelist "length")))))
+
+(defn exclusive-or [a b]
+  (or
+   (and a (not b))
+   (and (not a) b)))
+
+(defn parse-keyword [string]
+  (keyword (subs string 1)))
 
 (defn- make-rect-intersect-callback [node]
   (fn [point] (.rect js/dagreD3.intersect node point)))
@@ -37,19 +56,63 @@
       (aset node "intersect" (make-rect-intersect-callback node))
       shape-svg)))
 
+(declare update-input)
+
+(defn- boolean-control-handler [event]
+  (let [target (aget event "target")
+        kw-name (aget target "name")
+        kw (parse-keyword kw-name)
+        node (aget (aget g "_nodes") kw-name)
+        value (exclusive-or (aget target "checked")
+                            (= "false" (aget target "value")))]
+    (when (aget target "checked")
+      (.remove (aget (aget node "elem") "classList") "empty-input"))
+    (update-input kw value)))
+
+(defn- number-control-handler [event]
+  (let [target (aget event "target")
+        kw-name (aget target "name")
+        kw (parse-keyword kw-name)
+        node (aget (aget g "_nodes") kw-name)
+        value (aget target "value")
+        valid (and (not= "" value)
+                   (aget (aget target "validity") "valid"))]
+    (.toggle (aget (aget node "elem") "classList") "empty-input" (not valid))
+    (if valid
+      (update-input kw (js/parseFloat value))
+      (update-input kw nil))))
+
+(defn- enum-control-handler [event]
+  (let [target (aget event "target")
+        kw-name (aget target "name")
+        kw (parse-keyword kw-name)
+        node (aget (aget g "_nodes") kw-name)
+        option (.item (aget target "selectedOptions") 0)
+        value (aget option "value")
+        valid (not= value "")]
+    (.toggle (aget (aget node "elem") "classList") "empty-input" (not valid))
+    (if valid
+      (update-input kw (js/parseInt value))
+      (update-input kw nil))))
+
 (defn- boolean-controls [div]
   (let [label-true (.append div "label")
         radio-true (.append label-true "input")
         label-false (.append div "label")
         radio-false (.append label-false "input")]
     (.attr radio-true "type" "radio")
+    (.attr radio-true "value" "true")
+    (.addEventListener (.node radio-true) "change" boolean-control-handler)
     (.appendChild (.node label-true) (.createTextNode js/document "true"))
     (.attr radio-false "type" "radio")
+    (.attr radio-false "value" "false")
+    (.addEventListener (.node radio-false) "change" boolean-control-handler)
     (.appendChild (.node label-false) (.createTextNode js/document "false"))))
 
 (defn- number-controls [div]
   (let [input (.append div "input")]
-    (.attr input "type" "number")))
+    (.attr input "type" "number")
+    (.addEventListener (.node input) "change" number-control-handler)))
 
 (defn- enum-controls [div]
   (let [input (.append div "select")]
@@ -57,7 +120,8 @@
             #(let [option (.append input "option")]
                (.attr option "value" (val %))
                (.text option (key %)))
-            (seq {"foo" 1 "bar" 2})))))
+            (seq {"" "" "foo" "1" "bar" "2"})))
+    (.addEventListener (.node input) "change" enum-control-handler)))
 
 (defn register-shapes
   [render]
@@ -67,12 +131,30 @@
     (aset shapes "rectInput"
           (shape-helper number-controls))
     (aset shapes "rectSelect"
-          (shape-helper enum-controls))))
+          (shape-helper enum-controls))
+    (aset shapes "rectText"
+          (shape-helper (fn [div])))))
+
+(let [situation (atom (->MapTaxSituation {} {}))]
+  (defn update-calculations [kws]
+    (let [context (make-context forms @situation)]
+      (dorun (map (fn [kw]
+                    (let [node (aget (aget g "_nodes") (str kw))
+                          div (.querySelector (aget node "elem") "div")]
+                      (try
+                        (aset div "textContent" (calculate context kw))
+                        (catch js/Error e
+                          (aset div "textContent" "")))))
+                  kws))))
+
+  (let [rdeps (reverse-deps forms)]
+    (defn update-input [kw value]
+      (swap! situation assoc-in [:values kw] value)
+      (update-calculations (kw rdeps)))))
 
 (defn init
   []
-  (let [g (js/dagreD3.graphlib.Graph.)
-        svg (.select js/d3 "svg")
+  (let [svg (.select js/d3 "svg")
         svg-group (.append svg "g")
         render (js/dagreD3.render.)]
     (register-shapes render)
@@ -94,7 +176,9 @@
                     (js-obj "label" (get-name %)
                             "shape" "rectSelect"
                             "class" "input empty-input")
-                    (js-obj "label" (get-name %))))
+                    FormulaLine
+                    (js-obj "label" (get-name %)
+                            "shape" "rectText")))
                 (vals (:lines forms))))
     (dorun (map
             (fn [dest] (dorun (map
@@ -104,14 +188,24 @@
                                           (str (get-keyword dest))))
                                (get-deps dest))))
             (vals (:lines forms))))
-    (render (.select js/d3 "svg g") g)
+    (render svg-group g)
+    (let [_nodes (aget g "_nodes")]
+      (dorun (map
+              (fn [kw-string]
+                (let [node (aget _nodes kw-string)
+                      elem (aget node "elem")
+                      inputs (.querySelectorAll elem "input, select")
+                      inputs-seq (nodelist-to-seq inputs)]
+                  (dorun (map
+                          (fn [input] (.setAttribute input "name" kw-string))
+                          inputs-seq))))
+              (.keys js/Object _nodes))))
     (let [graph (.graph g)
           width (aget graph "width")
           height (aget graph "height")]
       (.attr svg "width" (+ width 40))
       (.attr svg "height" (+ height 40)))
-    (.attr svg-group "transform" "translate(20, 20)")))
-
-(let [situation (atom (->MapTaxSituation {} {}))])
+    (.attr svg-group "transform" "translate(20, 20)"))
+  (update-calculations (keys (filter #(instance? FormulaLine (val %)) (:lines forms)))))
 
 (.addEventListener js/document "DOMContentLoaded" init)
