@@ -115,12 +115,10 @@
     (.addEventListener (.node input) "change" number-control-handler)))
 
 (defn- enum-controls [div]
-  (let [input (.append div "select")]
-    (dorun (map
-            #(let [option (.append input "option")]
-               (.attr option "value" (val %))
-               (.text option (key %)))
-            (seq {"" "" "foo" "1" "bar" "2"})))
+  (let [input (.append div "select")
+        option (.append input "option")]
+    (.attr option "value" "")
+    (.text option "")
     (.addEventListener (.node input) "change" enum-control-handler)))
 
 (defn register-shapes
@@ -192,10 +190,20 @@
     (let [_nodes (aget g "_nodes")]
       (dorun (map
               (fn [kw-string]
-                (let [node (aget _nodes kw-string)
+                (let [kw (parse-keyword kw-string)
+                      line (kw (:lines forms))
+                      node (aget _nodes kw-string)
                       elem (aget node "elem")
                       inputs (.querySelectorAll elem "input, select")
                       inputs-seq (nodelist-to-seq inputs)]
+                  (when (instance? CodeInputLine line)
+                    (let [select (first inputs-seq)]
+                      (dorun (map (fn [entry]
+                                    (let [option (.createElement js/document "option")]
+                                      (.setAttribute option "value" (val entry))
+                                      (aset option "textContent" (key entry))
+                                      (.appendChild select option)))
+                                  (:options line)))))
                   (dorun (map
                           (fn [input] (.setAttribute input "name" kw-string))
                           inputs-seq))))
