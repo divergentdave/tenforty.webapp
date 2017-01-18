@@ -2,6 +2,7 @@
   (:require [tenforty.core :refer [calculate
                                    get-deps
                                    get-keyword
+                                   get-group
                                    get-name
                                    ->MapTaxSituation
                                    NumberInputLine
@@ -12,7 +13,7 @@
                                    make-context]]
             [tenforty.forms.ty2016 :refer [forms]]))
 
-(def g (js/dagreD3.graphlib.Graph.))
+(def g (js/dagreD3.graphlib.Graph. (js-obj "compound" true)))
 
 (defn nodelist-to-seq
   [nodelist]
@@ -178,6 +179,18 @@
                     (js-obj "label" (get-name %)
                             "shape" "rectText")))
                 (vals (:lines forms))))
+    (dorun (map #(when %
+                   (.setNode
+                    g
+                    (str "group_" %)
+                    (js-obj "label" (name %))))
+                (keys (:groups forms))))
+    (dorun (map #(when (get-group %)
+                   (.setParent
+                    g
+                    (str (get-keyword %))
+                    (str "group_" (get-group %))))
+                (vals (:lines forms))))
     (dorun (map
             (fn [dest] (dorun (map
                                (fn [src] (.setEdge
@@ -193,20 +206,21 @@
                 (let [kw (parse-keyword kw-string)
                       line (kw (:lines forms))
                       node (aget _nodes kw-string)
-                      elem (aget node "elem")
-                      inputs (.querySelectorAll elem "input, select")
-                      inputs-seq (nodelist-to-seq inputs)]
-                  (when (instance? CodeInputLine line)
-                    (let [select (first inputs-seq)]
-                      (dorun (map (fn [entry]
-                                    (let [option (.createElement js/document "option")]
-                                      (.setAttribute option "value" (val entry))
-                                      (aset option "textContent" (key entry))
-                                      (.appendChild select option)))
-                                  (:options line)))))
-                  (dorun (map
-                          (fn [input] (.setAttribute input "name" kw-string))
-                          inputs-seq))))
+                      elem (aget node "elem")]
+                  (when elem
+                    (let [inputs (.querySelectorAll elem "input, select")
+                          inputs-seq (nodelist-to-seq inputs)]
+                      (when (instance? CodeInputLine line)
+                        (let [select (first inputs-seq)]
+                          (dorun (map (fn [entry]
+                                        (let [option (.createElement js/document "option")]
+                                          (.setAttribute option "value" (val entry))
+                                          (aset option "textContent" (key entry))
+                                          (.appendChild select option)))
+                                      (:options line)))))
+                      (dorun (map
+                              (fn [input] (.setAttribute input "name" kw-string))
+                              inputs-seq))))))
               (.keys js/Object _nodes))))
     (let [graph (.graph g)
           width (aget graph "width")

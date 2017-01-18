@@ -12,6 +12,7 @@ dagreD3.graphlib.Graph = function() {};
 dagreD3.graphlib.Graph.prototype.setGraph = function() {};
 dagreD3.graphlib.Graph.prototype.setDefaultEdgeLabel = function() {};
 dagreD3.graphlib.Graph.prototype.setNode = function() {};
+dagreD3.graphlib.Graph.prototype.setParent = function() {};
 dagreD3.graphlib.Graph.prototype.setEdge = function() {};
 dagreD3.graphlib.Graph.prototype.graph = function() {};
 dagreD3.intersect.rect = function() {};
