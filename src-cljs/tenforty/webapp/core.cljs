@@ -134,7 +134,31 @@
     (aset shapes "rectText"
           (shape-helper (fn [div])))))
 
-(let [situation (atom (->MapTaxSituation {} {}))]
+(defn- empty-situation-factory
+  ([forms]
+   (empty-situation-factory forms nil))
+  ([forms group-kw]
+   (let [groups (:groups forms)
+         child-groups (seq (get groups group-kw))]
+     (->MapTaxSituation {} (zipmap
+                            child-groups
+                            (map #(vector (empty-situation-factory forms %))
+                                 child-groups))))))
+
+(defn- group-to-group-list-map
+  ([forms] (group-to-group-list-map forms nil (list)))
+  ([forms group-kw prefix]
+   (let [groups (:groups forms)
+         child-groups (seq (get groups group-kw))]
+     (reduce merge (concat (map
+                            #(sorted-map % (concat prefix [%]))
+                            child-groups)
+                           (map
+                            #(group-to-group-list-map forms % (concat prefix [%]))
+                            child-groups))))))
+
+(let [situation (atom (empty-situation-factory forms))
+      group-path-lookup (group-to-group-list-map forms)]
   (defn update-calculations [kws]
     (let [context (make-context forms @situation)]
       (dorun (map (fn [kw]
@@ -148,8 +172,15 @@
 
   (let [rdeps (reverse-deps forms)]
     (defn update-input [kw value]
-      (swap! situation assoc-in [:values kw] value)
-      (update-calculations (kw rdeps)))))
+      (let [line (kw (:lines forms))
+            group-kw (get-group line)
+            group-path (get group-path-lookup group-kw)
+            assoc-path (concat (interleave (repeat (count group-path) :groups)
+                                           group-path
+                                           (repeat (count group-path) 0))
+                               [:values kw])]
+        (swap! situation assoc-in assoc-path value)
+        (update-calculations (kw rdeps))))))
 
 (defn init
   []
