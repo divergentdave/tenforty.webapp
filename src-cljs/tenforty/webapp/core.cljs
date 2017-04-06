@@ -189,7 +189,7 @@
         render (js/dagreD3.render.)]
     (register-shapes render)
     (.setGraph g {})
-    (.setDefaultEdgeLabel g #(js-obj))
+    (.setDefaultEdgeLabel g (fn [v w name] (js-obj)))
     (dorun (map #(.setNode
                   g
                   (str (get-keyword %))
